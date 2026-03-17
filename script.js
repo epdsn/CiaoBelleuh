@@ -34,6 +34,33 @@ const formMessage = document.getElementById('form-message');
 const submitButton = contactForm.querySelector('.submit-button');
 const buttonText = submitButton.querySelector('.button-text');
 const buttonLoader = submitButton.querySelector('.button-loader');
+const contactMethodSelect = document.getElementById('contact-method');
+const handleGroup = document.getElementById('handle-group');
+const contactHandleInput = document.getElementById('contact-handle');
+const emailGroup = document.getElementById('email-group');
+const emailInput = document.getElementById('email');
+
+// Show/hide email and handle fields based on contact method
+function updateContactMethodFields() {
+    const method = contactMethodSelect ? contactMethodSelect.value : '';
+    if (emailGroup) {
+        emailGroup.style.display = method === 'email' ? 'block' : 'none';
+        if (method !== 'email') emailInput.value = '';
+    }
+    if (handleGroup) {
+        if (method === 'tiktok' || method === 'instagram') {
+            handleGroup.style.display = 'block';
+            contactHandleInput.setAttribute('placeholder', method === 'tiktok' ? 'Your TikTok @username' : 'Your Instagram @username');
+        } else {
+            handleGroup.style.display = 'none';
+            contactHandleInput.value = '';
+        }
+    }
+}
+
+if (contactMethodSelect) {
+    contactMethodSelect.addEventListener('change', updateContactMethodFields);
+}
 
 // Smooth scrolling for navigation links
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
@@ -122,7 +149,10 @@ const emailServices = {
                 from_name: formData.name,
                 from_email: formData.email,
                 phone: formData.phone || 'Not provided',
-                service: formData.service,
+                preferred_contact: formData.preferredContactMethod,
+                contact_handle: formData.contactHandle || '',
+                nail_length: formData.nailLength,
+                nail_design: formData.nailDesign,
                 message: formData.message
             }
         );
@@ -155,7 +185,11 @@ const emailServices = {
                 name: formData.name,
                 email: formData.email,
                 phone: formData.phone || 'Not provided',
-                subject: `New ${formData.service} inquiry from ${formData.name}`,
+                preferred_contact: formData.preferredContactMethod,
+                contact_handle: formData.contactHandle || '',
+                nail_length: formData.nailLength,
+                nail_design: formData.nailDesign,
+                subject: `New order inquiry from ${formData.name} (contact via ${formData.preferredContactMethod})`,
                 message: formData.message
             })
         });
@@ -179,7 +213,10 @@ contactForm.addEventListener('submit', async (e) => {
         name: document.getElementById('name').value.trim(),
         email: document.getElementById('email').value.trim(),
         phone: document.getElementById('phone').value.trim(),
-        service: document.getElementById('service').value,
+        preferredContactMethod: document.getElementById('contact-method').value,
+        contactHandle: document.getElementById('contact-handle').value.trim(),
+        nailLength: document.getElementById('nail-length').value,
+        nailDesign: document.getElementById('nail-design').value,
         message: document.getElementById('message').value.trim()
     };
     
@@ -189,9 +226,15 @@ contactForm.addEventListener('submit', async (e) => {
         return;
     }
     
-    if (!validateEmail(formData.email)) {
-        showMessage('Please enter a valid email address', 'error');
-        return;
+    if (formData.preferredContactMethod === 'email') {
+        if (!formData.email) {
+            showMessage('Please enter your email address', 'error');
+            return;
+        }
+        if (!validateEmail(formData.email)) {
+            showMessage('Please enter a valid email address', 'error');
+            return;
+        }
     }
     
     if (!validatePhone(formData.phone)) {
@@ -199,8 +242,23 @@ contactForm.addEventListener('submit', async (e) => {
         return;
     }
     
-    if (!formData.service) {
-        showMessage('Please select a service', 'error');
+    if (!formData.preferredContactMethod) {
+        showMessage('Please choose how you\'d like to be contacted', 'error');
+        return;
+    }
+    
+    if ((formData.preferredContactMethod === 'tiktok' || formData.preferredContactMethod === 'instagram') && !formData.contactHandle) {
+        showMessage('Please enter your @username so we can reach you on ' + formData.preferredContactMethod, 'error');
+        return;
+    }
+    
+    if (!formData.nailLength) {
+        showMessage('Please select a nail length', 'error');
+        return;
+    }
+    
+    if (!formData.nailDesign) {
+        showMessage('Please select a nail design', 'error');
         return;
     }
     
